@@ -30,8 +30,8 @@ Users can register, log in, and access their own private file storage from anywh
 
 ### 1 — Clone the repository
 ```bash
-git clone https://github.com/your-username/drive-project.git
-cd drive-project
+git clone https://github.com/ashwarya-maurya/Drive.git
+cd Drive
 ```
 
 ### 2 — Install dependencies

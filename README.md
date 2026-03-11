@@ -1,6 +1,8 @@
 # Drive — Personal Cloud Storage
 
 A web app that allows users to securely upload, manage and download files from cloud storage.
+Built with Node.js and Express on the backend, MongoDB for user data, and Supabase for file storage.
+Users can register, log in, and access their own private file storage from anywhere.
 
 ---
 

@@ -72,9 +72,9 @@ Drive is a full-stack server-rendered cloud file management system inspired by G
 
 ## 🟪 Pages
 
-* `/login` → Login Page
-* `/signup` → Signup Page
-* `/dashboard` → Main file management dashboard
+* `/user/login` → Login Page
+* `/user/register` → Signup Page
+* `/home` → Main file management dashboard
 
 ---
 

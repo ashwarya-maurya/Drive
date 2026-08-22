@@ -31,13 +31,13 @@
 <body class="min-h-screen bg-dark text-light">
 
   <!-- Navbar -->
-  <nav class="border-b border-white border-opacity-10 px-6 py-4 flex items-center justify-between">
+  <nav class="border-b border-white border-opacity-10 px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
     <div class="flex items-center gap-2">
       <i class="fa-brands fa-dropbox text-blue text-xl"></i>
       <span class="text-light font-bold text-base">Drive</span>
     </div>
-    <div class="flex items-center gap-4">
-      <span class="bg-blue bg-opacity-15 text-blue text-xs font-semibold px-3 py-1 rounded-full">
+    <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+      <span class="bg-blue bg-opacity-15 text-blue text-xs font-semibold px-2 sm:px-3 py-1 rounded-full truncate max-w-28 sm:max-w-none">
         <i class="fa-solid fa-circle-user mr-1"></i><%= username %>
       </span>
       <a href="/user/logout" style="color:#df2935" class="text-sm hover:opacity-80">
@@ -47,10 +47,10 @@
   </nav>
 
   <!-- Main -->
-  <main class="max-w-2xl mx-auto px-4 py-10 space-y-6">
+  <main class="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-10 space-y-4 sm:space-y-6">
 
     <!-- Upload Card -->
-    <div class="border border-white border-opacity-10 rounded-2xl p-6">
+    <div class="border border-white border-opacity-10 rounded-2xl p-4 sm:p-6">
 
       <h2 class="text-light font-semibold text-base mb-1">
         <i class="fa-solid fa-cloud-arrow-up text-blue mr-2"></i>Upload a File
@@ -59,11 +59,20 @@
 
       <form action="/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
 
+        <div id="actionMessage" class="hidden rounded-xl px-4 py-3 text-sm mb-4"></div>
+
+        <% if (loadError) { %>
+          <div class="rounded-xl px-4 py-3 text-sm mb-4 bg-orange bg-opacity-15 text-orange">
+            <%= loadError %>
+            <button type="button" onclick="window.location.reload()" class="underline font-semibold ml-1">Retry</button>
+          </div>
+        <% } %>
+
         <!-- Drop Zone -->
         <div
           id="uploadZone"
           onclick="document.getElementById('fileInput').click()"
-          class="border-2 border-dashed border-white border-opacity-10 hover:border-blue hover:border-opacity-60 rounded-xl p-10 text-center cursor-pointer"
+          class="border-2 border-dashed border-white border-opacity-10 hover:border-blue hover:border-opacity-60 rounded-xl p-6 sm:p-10 text-center cursor-pointer"
         >
           <!-- Default -->
           <div id="zoneDefault">
@@ -131,7 +140,7 @@
               : '—';
 
           %>
-            <li class="flex items-center justify-between px-6 py-4 border-b border-white border-opacity-5 last:border-b-0 hover:bg-white hover:bg-opacity-5">
+            <li class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-white border-opacity-5 last:border-b-0 hover:bg-white hover:bg-opacity-5">
 
               <div class="flex items-center gap-4 min-w-0">
                 <div class="w-9 h-9 rounded-lg bg-white bg-opacity-5 flex items-center justify-center shrink-0">
@@ -148,8 +157,8 @@
               </div>
 
               
-              <a href="/download/<%= userId %>/<%= file.name %>"
-                class="shrink-0 ml-4 bg-green bg-opacity-15 hover:bg-opacity-25 text-green text-xs font-semibold px-4 py-2 rounded-lg"
+              <a href="/download/<%= userId %>/<%= file.name %>" data-download
+                class="shrink-0 sm:ml-4 w-full sm:w-auto text-center bg-green bg-opacity-15 hover:bg-opacity-25 text-green text-xs font-semibold px-4 py-2 rounded-lg"
               >
                 <i class="fa-solid fa-download mr-1"></i>Download
               </a>
@@ -209,9 +218,54 @@
     }
   });
 
-  document.getElementById('uploadForm').addEventListener('submit', () => {
+  const actionMessage = document.getElementById('actionMessage');
+
+  function showActionError(message) {
+    actionMessage.textContent = message || 'Something went wrong. Please retry.';
+    actionMessage.className = 'rounded-xl px-4 py-3 text-sm mb-4 bg-orange bg-opacity-15 text-orange';
+  }
+
+  document.getElementById('uploadForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Uploading...';
     btn.disabled = true;
+
+    try {
+      const response = await fetch(event.currentTarget.action, {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: new FormData(event.currentTarget)
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message);
+      window.location.assign(result.redirect || '/home');
+    } catch (error) {
+      showActionError(error.message);
+      btn.innerHTML = '<i class="fa-solid fa-upload mr-2"></i>Upload File';
+      btn.disabled = false;
+    }
+  });
+
+  document.querySelectorAll('[data-download]').forEach(link => {
+    link.addEventListener('click', async event => {
+      event.preventDefault();
+      try {
+        const response = await fetch(link.href, { headers: { Accept: 'application/octet-stream, application/json' } });
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.message);
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const download = document.createElement('a');
+        download.href = url;
+        download.download = decodeURIComponent(link.href.split('/').pop()).replace(/^\d+_/, '');
+        download.click();
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        showActionError(error.message);
+      }
+    });
   });
 </script>
 

@@ -12,12 +12,28 @@ const app = express();
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
 
 app.set('view engine', 'ejs');
 app.set('views', './views');   
 
 app.use('/', indexRouter);
 app.use('/user', userRouter);
+
+app.use((err, req, res, next) => {
+  console.error('Request failed:', err);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  const message = 'Something went wrong. Please retry.';
+  if (req.get('accept')?.includes('application/json')) {
+    return res.status(500).json({ message });
+  }
+
+  res.status(500).send(message);
+});
 
 app.listen(3000, () => {
   console.log('Server running on port 3000');

@@ -21,7 +21,7 @@ router.post('/register',
     if (!errors.isEmpty()) {
       return res.status(400).json({
         errors: errors.array(),
-        message: 'Invalid Data'
+        message: 'Please check your details and retry.'
       })
     }
 
@@ -34,6 +34,9 @@ router.post('/register',
       password: hashPassword
     });
 
+    if (req.get('accept')?.includes('application/json')) {
+      return res.json({ redirect: '/user/login' });
+    }
     res.redirect('/user/login');
   }
 );
@@ -53,7 +56,7 @@ router.post('/login',
     if (!errors.isEmpty()) {
       return res.status(400).json({
         errors: errors.array(),
-        message: 'Invalid Data'
+        message: 'Please check your details and retry.'
       });
     }
 
@@ -81,6 +84,9 @@ router.post('/login',
     );
 
     res.cookie('token', token);
+    if (req.get('accept')?.includes('application/json')) {
+      return res.json({ redirect: '/home' });
+    }
     res.redirect('/home');    
   }
 );

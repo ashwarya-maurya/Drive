@@ -14,6 +14,10 @@
 
 Drive is a full-stack server-rendered cloud file management system inspired by Google Drive. It is built using **Node.js, Express, and EJS templates**, allowing users to upload, manage, download, and view files securely with authentication and cloud storage integration using Supabase.
 
+## Live Demo
+
+[Open Drive](https://drive-gkxh.onrender.com/user/login)
+
 ### Highlights
 
 * Login & Signup authentication system
@@ -121,8 +125,8 @@ Create a `.env` file:
 ```env
 MONGO_URI=your_mongodb_url
 SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-JWT_SECRET=your_secret_key
+SUPABASE_SERVICE_KEY=your_supabase_service_key
+JWT_KEY=your_jwt_secret
 ```
 
 ---
@@ -130,7 +134,7 @@ JWT_SECRET=your_secret_key
 ### 4. Run Project
 
 ```bash
-npm run dev
+npm start
 ```
 
 ---

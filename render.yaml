@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: drive
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /user/login
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: JWT_KEY
+        generateValue: true

@@ -27,12 +27,17 @@ app.use((err, req, res, next) => {
     return next(err);
   }
 
-  const message = 'Something went wrong. Please retry.';
+  const isFileTooLarge = err.code === 'LIMIT_FILE_SIZE';
+  const message = isFileTooLarge
+    ? 'This file is too large. The maximum size is 50 MB.'
+    : 'Something went wrong. Please retry.';
+  const status = isFileTooLarge ? 413 : 500;
+
   if (req.get('accept')?.includes('application/json')) {
-    return res.status(500).json({ message });
+    return res.status(status).json({ message });
   }
 
-  res.status(500).send(message);
+  res.status(status).send(message);
 });
 
 const port = process.env.PORT || 3000;

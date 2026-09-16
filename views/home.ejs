@@ -130,7 +130,7 @@
       <% } else { %>
         <ul class="overflow-y-auto max-h-36">
           <% files.forEach(file => {
-            const displayName = file.name.replace(/^\d+_/, '');
+            const displayName = file.name.replace(/^(?:\d+|[0-9a-f-]{36})_/, '');
             const ext = displayName.split('.').pop().toLowerCase();
 
             const sizeText = file.metadata && file.metadata.size
@@ -259,7 +259,7 @@
         const url = URL.createObjectURL(blob);
         const download = document.createElement('a');
         download.href = url;
-        download.download = decodeURIComponent(link.href.split('/').pop()).replace(/^\d+_/, '');
+        download.download = decodeURIComponent(link.href.split('/').pop()).replace(/^(?:\d+|[0-9a-f-]{36})_/, '');
         download.click();
         URL.revokeObjectURL(url);
       } catch (error) {

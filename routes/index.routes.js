@@ -1,11 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const { randomUUID } = require('crypto');
 const supabase = require('../config/supabase');
 const authMiddleware = require('../middleware/auth');
 
 
-const upload = multer({ storage: multer.memoryStorage() });
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FILE_SIZE }
+});
+
+function sanitizeFilename(filename) {
+  const safeName = filename
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9 _.'!,*&$@=;:+?()\-]/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return (safeName || 'file').slice(0, 180);
+}
 
 router.get('/home', authMiddleware, async (req, res) => {
   const userId = req.user.userId;
@@ -34,17 +50,36 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
     return res.status(400).json({ message: 'Choose a file and retry.' });
   }
 
-  const filePath = `${userId}/${Date.now()}_${file.originalname}`;
+  const storedFilename = `${randomUUID()}_${sanitizeFilename(file.originalname)}`;
+  const filePath = `${userId}/${storedFilename}`;
 
   const { error } = await supabase
     .storage
     .from('drive-files')
     .upload(filePath, file.buffer, {
-      contentType: file.mimetype
+      contentType: file.mimetype || 'application/octet-stream'
     });
 
   if (error) {
-    return res.status(500).json({ message: 'Upload failed. Please retry.' });
+    console.error('Supabase upload failed:', {
+      name: error.name,
+      message: error.message,
+      status: error.status,
+      statusCode: error.statusCode,
+      storageError: error.error,
+      fileSize: file.size,
+      mimeType: file.mimetype
+    });
+
+    const isTooLarge = error.status === 413 ||
+      error.statusCode === 413 ||
+      /too large|exceeds.*limit/i.test(error.message || '');
+
+    return res.status(isTooLarge ? 413 : 500).json({
+      message: isTooLarge
+        ? 'This file is too large. The maximum size is 50 MB.'
+        : 'Upload failed in cloud storage. Please retry.'
+    });
   }
 
   if (req.get('accept')?.includes('application/json')) {
@@ -74,7 +109,7 @@ router.get('/download/:userId/:filename', authMiddleware, async (req, res) => {
 
   const buffer = Buffer.from(await data.arrayBuffer());
 
-  const cleanName = filename.replace(/^\d+_/, '');
+  const cleanName = filename.replace(/^(?:\d+|[0-9a-f-]{36})_/, '');
 
   res.setHeader('Content-Disposition', `attachment; filename="${cleanName}"`);
   res.setHeader('Content-Type', data.type || 'application/octet-stream');

@@ -14,7 +14,7 @@ document.querySelectorAll('[data-inline-form]').forEach(form => {
       const response = await fetch(form.action, {
         method: form.method,
         headers: { Accept: 'application/json' },
-        body: new FormData(form)
+        body: new URLSearchParams(new FormData(form))
       });
       const result = await response.json();
 
